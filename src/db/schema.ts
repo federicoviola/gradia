@@ -1,46 +1,46 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { pgTable, serial, text, integer, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Users table
-export const users = sqliteTable('users', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    email: text('email').notNull().unique(),
+export const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
     passwordHash: text('password_hash').notNull(),
-    name: text('name'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    name: varchar('name', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 // Exam criteria
-export const examCriteria = sqliteTable('exam_criteria', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const examCriteria = pgTable('exam_criteria', {
+    id: serial('id').primaryKey(),
     userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
     criteria: text('criteria').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 // Evaluations
-export const evaluations = sqliteTable('evaluations', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const evaluations = pgTable('evaluations', {
+    id: serial('id').primaryKey(),
     userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    examType: text('exam_type'),
+    examType: varchar('exam_type', { length: 255 }),
     examContent: text('exam_content'),
     evaluationCriteria: text('evaluation_criteria'),
     totalStudents: integer('total_students').default(0),
-    averageGrade: text('average_grade'), // SQLite stores as text
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    averageGrade: varchar('average_grade', { length: 50 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 // Results
-export const results = sqliteTable('results', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const results = pgTable('results', {
+    id: serial('id').primaryKey(),
     evaluationId: integer('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
     userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    studentName: text('student_name').notNull(),
-    grade: text('grade').notNull(), // SQLite stores as text
+    studentName: varchar('student_name', { length: 255 }).notNull(),
+    grade: varchar('grade', { length: 50 }).notNull(),
     feedback: text('feedback').notNull(),
     submissionPath: text('submission_path'),
-    gradedAt: integer('graded_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    gradedAt: timestamp('graded_at', { withTimezone: true }).defaultNow(),
 });
 
 // Types for TypeScript

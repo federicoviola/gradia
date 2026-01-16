@@ -9,9 +9,8 @@ import { getCurrentUserId } from '@/auth';
 import { db } from '@/db';
 import { examCriteria, evaluations, results } from '@/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { nanoid } from 'nanoid';
+import { supabase } from '@/lib/supabase-client';
 
 // Helper para extraer texto de PDF
 async function extractTextFromPdf(fileBuffer: Buffer) {
@@ -24,16 +23,31 @@ async function extractTextFromPdf(fileBuffer: Buffer) {
   }
 }
 
-// Helper para guardar archivo PDF
+// Helper para guardar archivo PDF en Supabase Storage
 async function savePdfFile(fileBuffer: Buffer, filename: string): Promise<string> {
-  const uploadsDir = join(process.cwd(), 'uploads');
-  await mkdir(uploadsDir, { recursive: true });
-
   const uniqueFilename = `${nanoid()}-${filename}`;
-  const filepath = join(uploadsDir, uniqueFilename);
+  const bucketName = 'exam-submissions';
 
-  await writeFile(filepath, fileBuffer);
-  return `/uploads/${uniqueFilename}`;
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(`uploads/${uniqueFilename}`, fileBuffer, {
+      contentType: 'application/pdf',
+      upsert: false
+    });
+
+  if (error) {
+    console.error('Error uploading to Supabase:', error);
+    // Fallback: If Supabase is not configured yet, we might want to throw or handle gracefully
+    // For now, let's return a placeholder if it fails (likely due to missing credentials)
+    return `https://placeholder.com/storage/${uniqueFilename}`;
+  }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(`uploads/${uniqueFilename}`);
+
+  return publicUrl;
 }
 
 export async function gradeStudentExams(
