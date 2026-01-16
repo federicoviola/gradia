@@ -174,7 +174,8 @@ This project is licensed under the GNU General Public License v3 - see the [LICE
 
 ## 📧 Contact
 
-For questions or support, please open an issue on GitHub.
+Federico Viola - [@federicoviola](https://x.com/federicoviola)
+LinkedIn: [fedeviola](https://www.linkedin.com/in/fedeviola)
 
 ---
 
